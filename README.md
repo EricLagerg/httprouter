@@ -245,6 +245,23 @@ import (
     "strings"
 )
 
+type key int
+
+var sessionKey key = 0
+
+func Auth(handle httprouter.Handle) httprouter.Handle {
+	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx context.Context) {
+		session := ctx.Value(sessionKey)
+		if session.IsAuthorized() {
+			// Pass the session through with the context.
+			handle(w, r, ps, context.WithValue(ctx, sessionKey, session))
+		} else {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		}
+	}
+}
+
+
 func BasicAuth(h httprouter.Handle, user, pass []byte) httprouter.Handle {
 	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		const basicAuthPrefix string = "Basic "
@@ -288,6 +305,7 @@ func main() {
     router := httprouter.New()
     router.GET("/", Index)
     router.GET("/protected/", BasicAuth(Protected, user, pass))
+    router.GET("/authorized/", Auth(Protected))
 
     log.Fatal(http.ListenAndServe(":8080", router))
 }

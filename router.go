@@ -15,11 +15,11 @@
 //      "log"
 //  )
 //
-//  func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+//  func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params, _ context.Context) {
 //      fmt.Fprint(w, "Welcome!\n")
 //  }
 //
-//  func Hello(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+//  func Hello(w http.ResponseWriter, r *http.Request, ps httprouter.Params, _ context.Context) {
 //      fmt.Fprintf(w, "hello, %s!\n", ps.ByName("name"))
 //  }
 //
@@ -78,12 +78,14 @@ package httprouter
 
 import (
 	"net/http"
+
+	"golang.org/x/net/context"
 )
 
 // Handle is a function that can be registered to a route to handle HTTP
 // requests. Like http.HandlerFunc, but has a third parameter for the values of
-// wildcards (variables).
-type Handle func(http.ResponseWriter, *http.Request, Params)
+// wildcards (variables) and a fourth parameter for passing through contexts.
+type Handle func(http.ResponseWriter, *http.Request, Params, context.Context)
 
 // Param is a single URL parameter, consisting of a key and a value.
 type Param struct {
@@ -168,39 +170,44 @@ func New() *Router {
 	}
 }
 
-// GET is a shortcut for router.Handle("GET", path, handle)
+// GET shorthand for router.Handle("GET", path, handle)
 func (r *Router) GET(path string, handle Handle) {
 	r.Handle("GET", path, handle)
 }
 
-// HEAD is a shortcut for router.Handle("HEAD", path, handle)
+// HEAD shorthand for router.Handle("HEAD", path, handle)
 func (r *Router) HEAD(path string, handle Handle) {
 	r.Handle("HEAD", path, handle)
 }
 
-// OPTIONS is a shortcut for router.Handle("OPTIONS", path, handle)
+// OPTIONS shorthand for router.Handle("OPTIONS", path, handle)
 func (r *Router) OPTIONS(path string, handle Handle) {
 	r.Handle("OPTIONS", path, handle)
 }
 
-// POST is a shortcut for router.Handle("POST", path, handle)
+// POST shorthand for router.Handle("POST", path, handle)
 func (r *Router) POST(path string, handle Handle) {
 	r.Handle("POST", path, handle)
 }
 
-// PUT is a shortcut for router.Handle("PUT", path, handle)
+// PUT shorthand for router.Handle("PUT", path, handle)
 func (r *Router) PUT(path string, handle Handle) {
 	r.Handle("PUT", path, handle)
 }
 
-// PATCH is a shortcut for router.Handle("PATCH", path, handle)
+// PATCH shorthand for router.Handle("PATCH", path, handle)
 func (r *Router) PATCH(path string, handle Handle) {
 	r.Handle("PATCH", path, handle)
 }
 
-// DELETE is a shortcut for router.Handle("DELETE", path, handle)
+// DELETE shorthand for router.Handle("DELETE", path, handle)
 func (r *Router) DELETE(path string, handle Handle) {
 	r.Handle("DELETE", path, handle)
+}
+
+// TRACE shorthand for router.Handle("TRACE", path, handle)
+func (r *Router) TRACE(path string, handle Handle) {
+	r.Handle("TRACE", path, handle)
 }
 
 // Handle registers a new request handle with the given path and method.
@@ -233,7 +240,7 @@ func (r *Router) Handle(method, path string, handle Handle) {
 // request handle.
 func (r *Router) Handler(method, path string, handler http.Handler) {
 	r.Handle(method, path,
-		func(w http.ResponseWriter, req *http.Request, _ Params) {
+		func(w http.ResponseWriter, req *http.Request, _ Params, _ context.Context) {
 			handler.ServeHTTP(w, req)
 		},
 	)
@@ -262,7 +269,7 @@ func (r *Router) ServeFiles(path string, root http.FileSystem) {
 
 	fileServer := http.FileServer(root)
 
-	r.GET(path, func(w http.ResponseWriter, req *http.Request, ps Params) {
+	r.GET(path, func(w http.ResponseWriter, req *http.Request, ps Params, ctx context.Context) {
 		req.URL.Path = ps.ByName("filepath")
 		fileServer.ServeHTTP(w, req)
 	})
@@ -296,7 +303,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		path := req.URL.Path
 
 		if handle, ps, tsr := root.getValue(path); handle != nil {
-			handle(w, req, ps)
+			handle(w, req, ps, context.Background())
 			return
 		} else if req.Method != "CONNECT" && path != "/" {
 			code := 301 // Permanent redirect, request with GET method
