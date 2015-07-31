@@ -15,11 +15,11 @@
 //      "log"
 //  )
 //
-//  func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params, _ context.Context) {
+//  func Index(_ context.Context, w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 //      fmt.Fprint(w, "Welcome!\n")
 //  }
 //
-//  func Hello(w http.ResponseWriter, r *http.Request, ps httprouter.Params, _ context.Context) {
+//  func Hello(_ context.Contextl, w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 //      fmt.Fprintf(w, "hello, %s!\n", ps.ByName("name"))
 //  }
 //
@@ -85,7 +85,7 @@ import (
 // Handle is a function that can be registered to a route to handle HTTP
 // requests. Like http.HandlerFunc, but has a third parameter for the values of
 // wildcards (variables) and a fourth parameter for passing through contexts.
-type Handle func(http.ResponseWriter, *http.Request, Params, context.Context)
+type Handle func(context.Context, http.ResponseWriter, *http.Request, Params)
 
 // Param is a single URL parameter, consisting of a key and a value.
 type Param struct {
@@ -240,7 +240,7 @@ func (r *Router) Handle(method, path string, handle Handle) {
 // request handle.
 func (r *Router) Handler(method, path string, handler http.Handler) {
 	r.Handle(method, path,
-		func(w http.ResponseWriter, req *http.Request, _ Params, _ context.Context) {
+		func(_ context.Context, w http.ResponseWriter, req *http.Request, _ Params) {
 			handler.ServeHTTP(w, req)
 		},
 	)
@@ -269,7 +269,7 @@ func (r *Router) ServeFiles(path string, root http.FileSystem) {
 
 	fileServer := http.FileServer(root)
 
-	r.GET(path, func(w http.ResponseWriter, req *http.Request, ps Params, ctx context.Context) {
+	r.GET(path, func(_ context.Context, w http.ResponseWriter, req *http.Request, ps Params) {
 		req.URL.Path = ps.ByName("filepath")
 		fileServer.ServeHTTP(w, req)
 	})
@@ -303,7 +303,7 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		path := req.URL.Path
 
 		if handle, ps, tsr := root.getValue(path); handle != nil {
-			handle(w, req, ps, context.Background())
+			handle(context.Background(), w, req, ps)
 			return
 		} else if req.Method != "CONNECT" && path != "/" {
 			code := 301 // Permanent redirect, request with GET method

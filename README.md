@@ -63,11 +63,11 @@ import (
     "log"
 )
 
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func Index(ctx context.Context, w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
     fmt.Fprint(w, "Welcome!\n")
 }
 
-func Hello(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func Hello(ctx context.Context, w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
     fmt.Fprintf(w, "hello, %s!\n", ps.ByName("name"))
 }
 
@@ -250,7 +250,7 @@ type key int
 var sessionKey key = 0
 
 func Auth(handle httprouter.Handle) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params, ctx context.Context) {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		session := ctx.Value(sessionKey)
 		if session.IsAuthorized() {
 			// Pass the session through with the context.
@@ -263,7 +263,7 @@ func Auth(handle httprouter.Handle) httprouter.Handle {
 
 
 func BasicAuth(h httprouter.Handle, user, pass []byte) httprouter.Handle {
-	return func(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	return func(ctx context.Context, w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		const basicAuthPrefix string = "Basic "
 
 		// Get the Basic Authentication credentials
@@ -290,11 +290,11 @@ func BasicAuth(h httprouter.Handle, user, pass []byte) httprouter.Handle {
 	}
 }
 
-func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func Index(ctx context.Context, w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
     fmt.Fprint(w, "Not protected!\n")
 }
 
-func Protected(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func Protected(ctx context.Context, w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
     fmt.Fprint(w, "Protected!\n")
 }
 
