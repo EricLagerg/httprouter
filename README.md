@@ -230,7 +230,7 @@ func main() {
 ```
 
 ### Basic Authentication
-Another quick example: Basic Authentification (RFC 2617) for handles:
+Another quick example: Basic Authentication (RFC 2617) for handles:
 
 ```go
 package main
@@ -321,7 +321,7 @@ You can use another [http.Handler](http://golang.org/pkg/net/http/#Handler), for
 The `NotFound` handler can for example be used to serve static files from the root path `/` (like an index.html file along with other assets):
 ```go
 // Serve static files from the ./public directory
-router.NotFound = http.FileServer(http.Dir("public")).ServeHTTP
+router.NotFound = http.FileServer(http.Dir("public"))
 ```
 
 But this approach sidesteps the strict core rules of this router to avoid routing problems. A cleaner approach is to use a distinct sub-path for serving files, like `/static/*filepath` or `/files/*filepath`.
