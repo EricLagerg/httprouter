@@ -19,7 +19,7 @@ func FromContext(ctx context.Context) (Params, bool) {
 }
 
 func reqIDContext() context.Context {
-	return context.WithValue(context.Background(), reqKey, reqID())
+	return context.WithValue(context.Background(), reqKey, pool.get())
 }
 
 func ReqIDFromContext(ctx context.Context) (string, bool) {
